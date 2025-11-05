@@ -13,10 +13,31 @@ A fast and user-friendly command-line tool written in Rust for creating and mana
 
 ## Installation
 
-### From Source
+### Pre-built Binaries (Recommended)
+
+Download the latest release for your platform from the [releases page](https://github.com/dxkyy/mcs/releases):
+
+- **Windows**: `mcs-windows-x86_64.exe`
+- **Linux**: `mcs-linux-x86_64`
+- **macOS (Intel)**: `mcs-macos-x86_64`
+- **macOS (Apple Silicon)**: `mcs-macos-aarch64`
+
+#### Windows
+
+1. Download `mcs-windows-x86_64.exe`
+2. Rename it to `mcs.exe` (optional)
+3. Add it to your PATH or run it directly
+
+#### Linux/macOS
+
+1. Download the appropriate binary for your system
+2. Make it executable: `chmod +x mcs-*`
+3. Move it to your PATH: `sudo mv mcs-* /usr/local/bin/mcs`
+
+### From Source (Requires Rust)
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/dxkyy/mcs
 cd mcs
 cargo install --path .
 ```
