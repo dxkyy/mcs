@@ -3,6 +3,8 @@ mod commands;
 mod paper;
 mod vanilla;
 mod fabric;
+mod spigot;
+mod forge;
 mod prompt;
 mod setup;
 

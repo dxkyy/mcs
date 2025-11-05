@@ -9,7 +9,7 @@ A fast and user-friendly command-line tool written in Rust for creating and mana
 - Auto-generated start scripts for Windows and Linux/Mac
 - Automatic EULA acceptance
 - Configuration persistence via `mcs.toml`
-- Supports Paper and Vanilla servers
+- Supports Paper, Vanilla, Fabric, Spigot, and Forge servers
 
 ## Installation
 
@@ -54,7 +54,7 @@ mcs new ./my-server
 
 This will launch an interactive prompt asking you to configure:
 
-- **Server Type**: Paper or Vanilla (more types coming soon)
+- **Server Type**: e.g. Paper or Vanilla
 - **Minecraft Version**: Select from all available versions using arrow keys or type to search
 - **Memory Allocation**: Amount of RAM to allocate (e.g., 2G, 4G, 8G)
 
@@ -118,11 +118,18 @@ You can manually edit this file and run `mcs apply` to update your server, or us
 
 ## Supported Server Types
 
-- [x] Paper
-- [x] Vanilla
-- [x] Fabric
-- [ ] Spigot (coming soon)
-- [ ] Forge (coming soon)
+- [x] **Paper** - High-performance server with plugin support
+- [x] **Vanilla** - Official Minecraft server
+- [x] **Fabric** - Lightweight modding platform
+- [x] **Spigot** - Popular plugin-based server (requires Java, builds from source)
+- [x] **Forge** - Extensive modding platform (requires Java installer)
+
+### Server Type Notes
+
+- **Spigot**: Downloads BuildTools and compiles the server on first setup. This process takes several minutes but only happens once per version. Requires Java to be installed and in PATH.
+- **Forge**: Downloads and runs the Forge installer automatically. Requires Java to be installed and in PATH.
+- **Fabric** & **Paper**: Quick setup with direct JAR downloads.
+- **Vanilla**: Official Minecraft server from Mojang.
 
 ## Requirements
 

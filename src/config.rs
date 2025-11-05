@@ -15,6 +15,8 @@ pub enum ServerType {
     Paper,
     Vanilla,
     Fabric,
+    Spigot,
+    Forge,
 }
 
 impl std::fmt::Display for ServerType {
@@ -23,6 +25,8 @@ impl std::fmt::Display for ServerType {
             ServerType::Paper => write!(f, "Paper"),
             ServerType::Vanilla => write!(f, "Vanilla"),
             ServerType::Fabric => write!(f, "Fabric"),
+            ServerType::Spigot => write!(f, "Spigot"),
+            ServerType::Forge => write!(f, "Forge"),
         }
     }
 }

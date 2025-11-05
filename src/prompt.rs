@@ -1,12 +1,12 @@
 use anyhow::Result;
 use inquire::{Select, Text};
 use crate::config::{ServerConfig, ServerType};
-use crate::{paper, vanilla, fabric};
+use crate::{paper, vanilla, fabric, spigot, forge};
 
 pub fn prompt_for_config() -> Result<ServerConfig> {
     println!("▶ Minecraft Server Configuration\n");
 
-    let server_types = vec!["Paper", "Vanilla", "Fabric"];
+    let server_types = vec!["Paper", "Vanilla", "Fabric", "Spigot", "Forge"];
     let server_type_str = Select::new("Server type:", server_types)
         .prompt()?;
 
@@ -14,6 +14,8 @@ pub fn prompt_for_config() -> Result<ServerConfig> {
         "Paper" => ServerType::Paper,
         "Vanilla" => ServerType::Vanilla,
         "Fabric" => ServerType::Fabric,
+        "Spigot" => ServerType::Spigot,
+        "Forge" => ServerType::Forge,
         _ => unreachable!(),
     };
 
@@ -46,6 +48,28 @@ pub fn prompt_for_config() -> Result<ServerConfig> {
         ServerType::Fabric => {
             println!("\n⟳ Fetching available Fabric versions...");
             let versions = fabric::get_available_versions()?;
+
+            let default_index = 0;
+
+            Select::new("Minecraft version:", versions)
+                .with_starting_cursor(default_index)
+                .with_help_message("Use arrow keys or type to search")
+                .prompt()?
+        }
+        ServerType::Spigot => {
+            println!("\n⟳ Fetching available Spigot versions...");
+            let versions = spigot::get_available_versions()?;
+
+            let default_index = 0;
+
+            Select::new("Minecraft version:", versions)
+                .with_starting_cursor(default_index)
+                .with_help_message("Use arrow keys or type to search")
+                .prompt()?
+        }
+        ServerType::Forge => {
+            println!("\n⟳ Fetching available Forge versions...");
+            let versions = forge::get_available_versions()?;
 
             let default_index = 0;
 
