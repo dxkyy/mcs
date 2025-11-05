@@ -2,6 +2,7 @@ mod config;
 mod commands;
 mod paper;
 mod vanilla;
+mod fabric;
 mod prompt;
 mod setup;
 

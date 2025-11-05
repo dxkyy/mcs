@@ -120,9 +120,9 @@ You can manually edit this file and run `mcs apply` to update your server, or us
 
 - [x] Paper
 - [x] Vanilla
+- [x] Fabric
 - [ ] Spigot (coming soon)
 - [ ] Forge (coming soon)
-- [ ] Fabric (coming soon)
 
 ## Requirements
 

@@ -37,7 +37,6 @@ pub fn setup_server(path: &PathBuf, config: &ServerConfig) -> Result<()> {
         .user_agent("mcs/1.0.0 (github.com/user/mcs)")
         .build()?;
 
-    // Get version manifest
     let manifest_response = client
         .get("https://launchermeta.mojang.com/mc/game/version_manifest.json")
         .send()?;
@@ -48,7 +47,6 @@ pub fn setup_server(path: &PathBuf, config: &ServerConfig) -> Result<()> {
 
     let manifest: Value = manifest_response.json()?;
 
-    // Find the specific version
     let versions = manifest["versions"]
         .as_array()
         .ok_or_else(|| anyhow!("Failed to parse versions from manifest"))?;
@@ -64,7 +62,6 @@ pub fn setup_server(path: &PathBuf, config: &ServerConfig) -> Result<()> {
 
     println!("■ Found version {}", config.version);
 
-    // Get version details
     let version_response = client.get(version_url).send()?;
 
     if !version_response.status().is_success() {
@@ -73,12 +70,10 @@ pub fn setup_server(path: &PathBuf, config: &ServerConfig) -> Result<()> {
 
     let version_info: Value = version_response.json()?;
 
-    // Get server download URL
     let server_url = version_info["downloads"]["server"]["url"]
         .as_str()
         .ok_or_else(|| anyhow!("Server download URL not found for this version"))?;
 
-    // Download the server jar
     let jar_response = client.get(server_url).send()?;
     let jar_bytes = jar_response.bytes()?;
 

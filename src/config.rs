@@ -14,6 +14,7 @@ pub struct ServerConfig {
 pub enum ServerType {
     Paper,
     Vanilla,
+    Fabric,
 }
 
 impl std::fmt::Display for ServerType {
@@ -21,6 +22,7 @@ impl std::fmt::Display for ServerType {
         match self {
             ServerType::Paper => write!(f, "Paper"),
             ServerType::Vanilla => write!(f, "Vanilla"),
+            ServerType::Fabric => write!(f, "Fabric"),
         }
     }
 }
