@@ -9,7 +9,7 @@ A fast and user-friendly command-line tool written in Rust for creating and mana
 - Auto-generated start scripts for Windows and Linux/Mac
 - Automatic EULA acceptance
 - Configuration persistence via `mcs.toml`
-- Currently supports Paper servers (more server types coming soon)
+- Supports Paper and Vanilla servers
 
 ## Installation
 
@@ -33,7 +33,7 @@ mcs new ./my-server
 
 This will launch an interactive prompt asking you to configure:
 
-- **Server Type**: Currently supports Paper (Vanilla, Spigot, etc. coming soon)
+- **Server Type**: Paper or Vanilla (more types coming soon)
 - **Minecraft Version**: Select from all available versions using arrow keys or type to search
 - **Memory Allocation**: Amount of RAM to allocate (e.g., 2G, 4G, 8G)
 
@@ -98,7 +98,7 @@ You can manually edit this file and run `mcs apply` to update your server, or us
 ## Supported Server Types
 
 - [x] Paper
-- [ ] Vanilla (coming soon)
+- [x] Vanilla
 - [ ] Spigot (coming soon)
 - [ ] Forge (coming soon)
 - [ ] Fabric (coming soon)

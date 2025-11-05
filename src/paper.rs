@@ -84,6 +84,8 @@ pub fn setup_server(path: &PathBuf, config: &ServerConfig) -> Result<()> {
 
     let server_jar_path = path.join("server.jar");
     fs::write(&server_jar_path, jar_bytes)?;
+    fs::create_dir_all(path.join("plugins"))?;
+
 
     println!("✓ Downloaded server.jar");
 

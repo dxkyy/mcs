@@ -1,6 +1,7 @@
 mod config;
 mod commands;
 mod paper;
+mod vanilla;
 mod prompt;
 mod setup;
 

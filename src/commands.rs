@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use crate::config::{ServerConfig, ServerType};
 use crate::prompt::prompt_for_config;
 use crate::setup::{create_start_scripts, create_eula};
-use crate::paper;
+use crate::{paper, vanilla};
 
 pub fn create_new_server(path: &PathBuf) -> Result<()> {
     if !path.exists() {
@@ -66,6 +66,11 @@ fn setup_server(path: &PathBuf, config: &ServerConfig) -> Result<()> {
     match config.server_type {
         ServerType::Paper => {
             paper::setup_server(path, config)?;
+            create_start_scripts(path, config)?;
+            create_eula(path)?;
+        }
+        ServerType::Vanilla => {
+            vanilla::setup_server(path, config)?;
             create_start_scripts(path, config)?;
             create_eula(path)?;
         }
