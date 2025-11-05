@@ -1,6 +1,6 @@
 # MCS - Minecraft Server CLI
 
-A fast and user-friendly command-line tool written in Rust for creating and managing Minecraft servers.
+A fast, lightweight, and user-friendly command-line tool written in Rust for creating and managing Minecraft servers.
 
 ## Features
 
