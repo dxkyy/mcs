@@ -21,7 +21,7 @@ jobs:
             artifact_name: mcs.exe
             asset_name: mcs-windows-x86_64.exe
           - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
+            target: x86_64-unknown-linux-musl
             artifact_name: mcs
             asset_name: mcs-linux-x86_64
           - os: macos-latest
@@ -36,6 +36,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install musl tools (Linux only)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
