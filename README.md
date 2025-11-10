@@ -1,6 +1,12 @@
 # MCS - Minecraft Server CLI
 
+[![Release](https://github.com/dxkyy/mcs/actions/workflows/release.yml/badge.svg)](https://github.com/dxkyy/mcs/actions/workflows/release.yml)
+
 A fast, lightweight, and user-friendly command-line tool written in Rust for creating and managing Minecraft servers.
+
+## Demo
+
+[![asciicast](https://asciinema.org/a/piWTHf4QdhTgseC1wdaZJwwGr.svg)](https://asciinema.org/a/piWTHf4QdhTgseC1wdaZJwwGr)
 
 ## Features
 
