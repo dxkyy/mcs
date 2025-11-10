@@ -27,6 +27,10 @@ enum Commands {
     },
     Apply,
     Configure,
+    Add {
+        // Future feature: add mods/plugins
+        modrinth_url: String,
+    }
 }
 
 fn main() -> Result<()> {
@@ -41,6 +45,9 @@ fn main() -> Result<()> {
         }
         Commands::Configure => {
             commands::reconfigure_server()?;
+        }
+        Commands::Add { modrinth_url } => {
+            println!("TODO: implement adding mods/plugins from Modrinth: {}", modrinth_url);
         }
     }
 
