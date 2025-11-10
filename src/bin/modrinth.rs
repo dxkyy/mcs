@@ -1,3 +1,33 @@
+use serde::{Deserialize, Serialize};
+use std::fmt;
+use thiserror::Error;
+
+// ============================================================================
+// Error Types
+// ============================================================================
+
+#[derive(Error, Debug)]
+pub enum ModrinthError {
+    #[error("HTTP request failed: {0}")]
+    RequestError(#[from] reqwest::Error),
+    
+    #[error("JSON parsing failed: {0}")]
+    JsonError(#[from] serde_json::Error),
+    
+    #[error("File operation failed: {0}")]
+    IoError(#[from] std::io::Error),
+    
+    #[error("No files found in version")]
+    NoFilesFound,
+    
+    #[error("Invalid project ID: {0}")]
+    InvalidProjectId(String),
+}
+
+pub type Result<T> = std::result::Result<T, ModrinthError>;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum ServerType {
     Paper,
     Vanilla,
@@ -5,7 +35,30 @@ pub enum ServerType {
     Spigot,
     Forge,
 }
-#[derive(serde::Deserialize)]
+
+impl ServerType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ServerType::Fabric => "fabric",
+            ServerType::Forge => "forge",
+            ServerType::Vanilla => "vanilla",
+            ServerType::Paper => "paper",
+            ServerType::Spigot => "spigot",
+        }
+    }
+}
+
+impl fmt::Display for ServerType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+// ============================================================================
+// API Response Types
+// ============================================================================
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ModrinthProject {
     pub client_side: String,
     pub server_side: String,
@@ -42,13 +95,31 @@ pub struct ModrinthProject {
     pub thread_id: Option<String>,
 }
 
-#[derive(serde::Deserialize)]
+impl ModrinthProject {
+    pub fn is_compatible_with(&self, server_type: ServerType) -> bool {
+        self.loaders.iter().any(|l| l.eq_ignore_ascii_case(server_type.as_str()))
+    }
+    
+    pub fn compatible_loaders(&self) -> Vec<ServerType> {
+        let mut loaders = Vec::new();
+        for loader in &[ServerType::Fabric, ServerType::Forge, ServerType::Vanilla, 
+                       ServerType::Paper, ServerType::Spigot] {
+            if self.is_compatible_with(*loader) {
+                loaders.push(*loader);
+            }
+        }
+        loaders
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ModrinthLicense {
     pub id: String,
     pub name: String,
     pub url: Option<String>,
 }
-#[derive(Debug, serde::Deserialize)]
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ModrinthProjectVersion {
     pub name: String,
     pub version_number: String,
@@ -67,92 +138,191 @@ pub struct ModrinthProjectVersion {
     pub files: Vec<ModrinthFile>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+impl ModrinthProjectVersion {
+    pub fn primary_file(&self) -> Option<&ModrinthFile> {
+        self.files.first()
+    }
+    
+    pub fn supports_game_version(&self, version: &str) -> bool {
+        self.game_versions.contains(&version.to_string())
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ModrinthFile {
     pub filename: String,
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub size: Option<u64>,
+    #[serde(default)]
+    pub primary: Option<bool>,
 }
 
-pub fn fetch_modrinth_project(project_id: &str) -> Result<ModrinthProject, reqwest::Error> {
-    let url = format!("https://api.modrinth.com/v2/project/{}", project_id);
-    let response = reqwest::blocking::get(&url)?;
-    let project: ModrinthProject = response.json()?;
-    Ok(project)
+// ============================================================================
+// API Client
+// ============================================================================
+
+pub struct ModrinthClient {
+    client: reqwest::blocking::Client,
+    base_url: String,
+    cdn_url: String,
 }
 
-pub fn check_compatible_loader(project: &ModrinthProject, server_type: &ServerType) -> bool {
-    let compatible_loader = match server_type {
-        ServerType::Fabric => "fabric",
-        ServerType::Forge => "forge",
-        ServerType::Vanilla => "vanilla",
-        ServerType::Paper => "paper",
-        ServerType::Spigot => "spigot",
-    };
-    project.loaders.contains(&compatible_loader.to_string())
-}
-
-pub fn fetch_versions_for(project_id: &str, loader: &ServerType, game_version: &str) -> Result<Vec<ModrinthProjectVersion>, reqwest::Error> {
-    // query parameters: loaders ["fabric", "forge", etc.], game_versions ["1.16.5", etc.] and featured: bool
-    let loader_str = match loader {
-        ServerType::Fabric => "fabric",
-        ServerType::Forge => "forge",
-        ServerType::Vanilla => "vanilla",
-        ServerType::Paper => "paper",
-        ServerType::Spigot => "spigot",
-    };
-    let url = format!("https://api.modrinth.com/v2/project/{}/version?loaders=[\"{}\"]&game_versions=[\"{}\"]", project_id, loader_str, game_version);
-    let response = reqwest::blocking::get(&url)?;
-    // print the response text for debugging
-    let versions: Vec<serde_json::Value> = response.json()?;
-    let mut project_versions = Vec::new();
-    for version in versions {
-        let project_version: ModrinthProjectVersion = serde_json::from_value(version).unwrap();
-        project_versions.push(project_version);
+impl ModrinthClient {
+    pub fn new() -> Result<Self> {
+        let client = reqwest::blocking::Client::builder()
+            .user_agent("github.com/dxkyy/mcs")
+            .build()?;
+        
+        Ok(Self {
+            client,
+            base_url: "https://api.modrinth.com/v2".to_string(),
+            cdn_url: "https://cdn.modrinth.com".to_string(),
+        })
     }
-    Ok(project_versions)
-}
-
-pub fn download_version_file(project_id: &str, version_id: &str, filename: &str) -> Result<Vec<u8>, reqwest::Error> {
-    // https://cdn.modrinth.com/data/AANobbMI/versions/ryOMVRuG/sodium-fabric-0.5.12-beta.2%2Bmc1.20.1.jar
-    let url = format!("https://cdn.modrinth.com/data/{}/versions/{}/{}", project_id, version_id, filename);
-    let response = reqwest::blocking::get(&url)?;
-    let bytes = response.bytes()?;
-    Ok(bytes.to_vec())
-}
-
-pub fn main() {
-    let project_id = "sodium";
-    match fetch_modrinth_project(project_id) {
-        Ok(project) => {
-            println!("Project Title: {}", project.title);
-            println!("Project ID: {}", project.id);
-            println!("Description: {}", project.description);
-            println!("Downloads: {}", project.downloads);
-            println!("Compatible with Fabric: {}", check_compatible_loader(&project, &ServerType::Fabric));
+    
+    pub fn fetch_project(&self, project_id: &str) -> Result<ModrinthProject> {
+        if project_id.trim().is_empty() {
+            return Err(ModrinthError::InvalidProjectId(project_id.to_string()));
         }
-        Err(e) => eprintln!("Error fetching project: {}", e),
+        
+        let url = format!("{}/project/{}", self.base_url, project_id);
+        let response = self.client.get(&url).send()?;
+        
+        if !response.status().is_success() {
+            return Err(ModrinthError::RequestError(
+                response.error_for_status().unwrap_err()
+            ));
+        }
+        
+        Ok(response.json()?)
     }
+    
+    pub fn fetch_versions(
+        &self,
+        project_id: &str,
+        loaders: &[ServerType],
+        game_versions: &[&str],
+    ) -> Result<Vec<ModrinthProjectVersion>> {
+        let mut url = format!("{}/project/{}/version", self.base_url, project_id);
+        
+        let mut params = Vec::new();
+        
+        if !loaders.is_empty() {
+            let loader_list: Vec<String> = loaders.iter()
+                .map(|l| format!("\"{}\"", l.as_str()))
+                .collect();
+            params.push(format!("loaders=[{}]", loader_list.join(",")));
+        }
+        
+        if !game_versions.is_empty() {
+            let version_list: Vec<String> = game_versions.iter()
+                .map(|v| format!("\"{}\"", v))
+                .collect();
+            params.push(format!("game_versions=[{}]", version_list.join(",")));
+        }
+        
+        if !params.is_empty() {
+            url.push_str(&format!("?{}", params.join("&")));
+        }
+        
+        let response = self.client.get(&url).send()?;
+        
+        if !response.status().is_success() {
+            return Err(ModrinthError::RequestError(
+                response.error_for_status().unwrap_err()
+            ));
+        }
 
-        // Fetch versions for the project
-        match fetch_versions_for(project_id, &ServerType::Fabric, "1.20.1") {
-            Ok(versions) => {
-                // print full version[0] info for debugging with all fields
-                for version in &versions {
-                    println!("Version: {} - {} - {}", version.version_number, version.files[0].filename, version.changelog_url.as_ref().unwrap_or(&"No changelog URL".to_string())
-                );
-                }
-                // print all fields for the first version
-                if let Some(first_version) = versions.get(0) {
-                    println!("Downloading first version file: {}", first_version.files[0].filename);
-                    match download_version_file(&first_version.project_id, &first_version.id, &first_version.files[0].filename) {
-                        Ok(file_bytes) => {
-                            // Save the downloaded file to disk
-                            std::fs::write(&first_version.files[0].filename, file_bytes).unwrap();
-                            println!("File downloaded and saved as {}", first_version.files[0].filename);
-                        }
-                        Err(e) => eprintln!("Error downloading file: {}", e),
-                    }
-                }
-            }
-            Err(e) => eprintln!("Error fetching versions: {}", e),
+        Ok(response.json()?)
+    }
+    
+    pub fn download_file(
+        &self,
+        project_id: &str,
+        version_id: &str,
+        filename: &str,
+    ) -> Result<Vec<u8>> {
+        let url = format!(
+            "{}/data/{}/versions/{}/{}",
+            self.cdn_url, project_id, version_id, filename
+        );
+        
+        let response = self.client.get(&url).send()?;
+        
+        if !response.status().is_success() {
+            return Err(ModrinthError::RequestError(
+                response.error_for_status().unwrap_err()
+            ));
+        }
+        
+        Ok(response.bytes()?.to_vec())
+    }
+    
+    pub fn download_version(&self, version: &ModrinthProjectVersion) -> Result<Vec<u8>> {
+        let file = version.primary_file()
+            .ok_or(ModrinthError::NoFilesFound)?;
+        
+        self.download_file(&version.project_id, &version.id, &file.filename)
+    }
+    
+    pub fn download_and_save(
+        &self,
+        version: &ModrinthProjectVersion,
+        output_path: &std::path::Path,
+    ) -> Result<()> {
+        let data = self.download_version(version)?;
+        std::fs::write(output_path, data)?;
+        Ok(())
+    }
+}
+
+impl Default for ModrinthClient {
+    fn default() -> Self {
+        Self::new().expect("Failed to create default ModrinthClient")
+    }
+}
+
+
+pub fn main() -> Result<()> {
+    let client = ModrinthClient::new()?;
+    
+    // Fetch project information
+    let project = client.fetch_project("sodium")?;
+    println!("Project Title: {}", project.title);
+    println!("Project ID: {}", project.id);
+    println!("Description: {}", project.description);
+    println!("Downloads: {}", project.downloads);
+    println!("Compatible loaders: {:?}", project.compatible_loaders());
+    
+    // Fetch versions
+    let versions = client.fetch_versions(
+        &project.id,
+        &[ServerType::Fabric],
+        &["1.20.1"],
+    )?;
+    
+    println!("\nAvailable versions:");
+    for version in &versions {
+        if let Some(file) = version.primary_file() {
+            println!(
+                "  {} - {} - {}",
+                version.version_number,
+                file.filename,
+                version.changelog_url.as_deref().unwrap_or("No changelog")
+            );
         }
     }
+    
+    // Download the first version
+    if let Some(version) = versions.first() {
+        if let Some(file) = version.primary_file() {
+            println!("\nDownloading: {}", file.filename);
+            client.download_and_save(version, std::path::Path::new(&file.filename))?;
+            println!("File saved successfully!");
+        }
+    }
+    
+    Ok(())
+}
