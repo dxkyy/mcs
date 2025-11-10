@@ -138,6 +138,12 @@ You can manually edit this file and run `mcs apply` to update your server, or us
 - Java 17+ (for running Minecraft 1.18-1.20)
 - Java 16+ (for running Minecraft 1.17)
 
+---
+
 ## Contributing
 
-Contributions are welcome! Feel free to submit issues or pull requests.
+Contributions are welcome! Feel free to submit issues or pull requests. Contributions would be really appreciated since I plan to keep improving this tool and expand this from just a personal project to something really awesome for the minecraft community :3
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned features and future versions.
