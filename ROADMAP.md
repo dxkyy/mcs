@@ -2,7 +2,7 @@
 
 ---
 
-## Version 0.2.0: Mod/Plugin Installation Focus
+## Version 0.2.0: Mod/Plugin Installation Focus ✅
 
 **Goal:** Enhance server customization with easy mod/plugin addition.
 
@@ -20,7 +20,7 @@
 
 - Basic mod/plugin listing: `mcs list mods` or `mcs list plugins` (simple output of installed files).
 - Add version conflict resolution (e.g., warn if mod requires different MC version).
-- Auto-install required dependencies: when a mod/plugin has `"required"` deps, automatically run `mcs add` for each one before completing.
+- Auto-install required dependencies: when a mod/plugin has `"required"` deps, automatically run `mcs add` for each one before completing (recursively).
 
 ## Version 0.2.2: Advanced Mod/Plugin Features
 
