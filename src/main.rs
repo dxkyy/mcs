@@ -7,6 +7,7 @@ mod spigot;
 mod forge;
 mod prompt;
 mod setup;
+mod modrinth;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -27,6 +28,9 @@ enum Commands {
     },
     Apply,
     Configure,
+    Add {
+        name: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -42,8 +46,10 @@ fn main() -> Result<()> {
         Commands::Configure => {
             commands::reconfigure_server()?;
         }
+        Commands::Add { name } => {
+            commands::add_content(&name)?;
+        }
     }
 
     Ok(())
 }
-
