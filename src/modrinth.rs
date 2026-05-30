@@ -92,6 +92,32 @@ pub fn download_file(url: &str, dest_path: &Path) -> Result<()> {
     Ok(())
 }
 
+pub fn get_project(slug: &str) -> Result<Option<ModrinthProject>> {
+    let client = build_client()?;
+
+    let response = client
+        .get(format!("{}/project/{}", BASE_URL, slug))
+        .send()
+        .context("Failed to fetch project from Modrinth")?;
+
+    if response.status().as_u16() == 404 {
+        return Ok(None);
+    }
+
+    if !response.status().is_success() {
+        return Err(anyhow!(
+            "Failed to fetch project: HTTP {}",
+            response.status()
+        ));
+    }
+
+    let project: ModrinthProject = response
+        .json()
+        .context("Failed to parse project response")?;
+
+    Ok(Some(project))
+}
+
 pub fn search_projects(
     query: &str,
     project_type: &str,

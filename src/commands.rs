@@ -101,6 +101,13 @@ pub fn add_content(name: &str) -> Result<()> {
     let resolved_slug: String = {
         let versions = modrinth::get_project_versions(slug, loader, &config.version)?;
         if versions.is_empty() {
+            // Check if the project exists but is incompatible with this loader/version
+            if let Some(project) = modrinth::get_project(slug)? {
+                return Err(anyhow!(
+                    "'{}' exists on Modrinth but has no versions for {} on Minecraft {}.",
+                    project.title, loader, config.version
+                ));
+            }
             println!("⟳ No exact match, searching Modrinth...");
             let results =
                 modrinth::search_projects(name, project_type, loader, &config.version)?;
@@ -147,10 +154,27 @@ pub fn add_content(name: &str) -> Result<()> {
         .map(|(v, _)| v)
         .ok_or_else(|| anyhow!("Failed to match selected version"))?;
 
-    // Warn on required dependencies
+    // Warn on required dependencies that aren't already installed
     for dep in &selected_version.dependencies {
-        if dep.dependency_type == "required" {
-            println!("⚠  This {} requires: {}", project_type, dep.project_id);
+        if dep.dependency_type != "required" {
+            continue;
+        }
+        let (dep_title, dep_slug) = modrinth::get_project(&dep.project_id)
+            .ok()
+            .flatten()
+            .map(|p| (p.title, p.slug))
+            .unwrap_or_else(|| (dep.project_id.clone(), dep.project_id.clone()));
+
+        let already_installed = fs::read_dir(current_dir.join(dest_subdir))
+            .map(|entries| {
+                entries
+                    .filter_map(|e| e.ok())
+                    .any(|e| e.file_name().to_string_lossy().contains(&dep_slug))
+            })
+            .unwrap_or(false);
+
+        if !already_installed {
+            println!("⚠  This {} requires: {}", project_type, dep_title);
         }
     }
 
