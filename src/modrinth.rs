@@ -8,6 +8,7 @@ const BASE_URL: &str = "https://api.modrinth.com/v2";
 const USER_AGENT: &str = "mcs/0.2.0 (github.com/dxkyy/mcs)";
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct ModrinthProject {
     pub slug: String,
     pub title: String,
@@ -15,6 +16,7 @@ pub struct ModrinthProject {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct ModrinthVersion {
     pub id: String,
     pub name: String,
