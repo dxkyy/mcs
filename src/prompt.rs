@@ -1,5 +1,5 @@
 use anyhow::Result;
-use inquire::{Select, Text};
+use inquire::{Confirm, Select, Text};
 use crate::config::{ServerConfig, ServerType};
 use crate::{paper, vanilla, fabric, spigot, forge};
 
@@ -82,5 +82,14 @@ pub fn prompt_for_config() -> Result<ServerConfig> {
         .with_help_message("e.g., 2G, 4G, 8G")
         .prompt()?;
 
-    Ok(ServerConfig::new(version, server_type, memory))
+    let recommended_flags = if server_type == ServerType::Paper {
+        Confirm::new("Use Paper's recommended JVM flags?")
+            .with_default(true)
+            .with_help_message("Fetches recommended flags from the Paper API")
+            .prompt()?
+    } else {
+        false
+    };
+
+    Ok(ServerConfig::new(version, server_type, memory, recommended_flags))
 }
