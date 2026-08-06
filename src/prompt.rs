@@ -24,9 +24,6 @@ pub fn prompt_for_config() -> Result<ServerConfig> {
             println!("\n⟳ Fetching available Paper versions...");
             let versions = paper::get_available_versions()?;
 
-            let mut versions = versions;
-            versions.reverse();
-
             let default_index = 0;
 
             Select::new("Minecraft version:", versions)
