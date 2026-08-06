@@ -115,6 +115,36 @@ pub fn get_available_versions() -> Result<Vec<String>> {
     Ok(versions)
 }
 
+pub fn get_recommended_flags(version: &str) -> Result<Vec<String>> {
+    let client = Client::builder()
+        .user_agent("mcs/1.0.0 (github.com/user/mcs)")
+        .build()?;
+
+    let url = format!(
+        "https://fill.papermc.io/v3/projects/paper/versions/{}",
+        version
+    );
+
+    let response = client.get(&url).send()?;
+
+    if !response.status().is_success() {
+        return Err(anyhow!(
+            "Failed to fetch Paper metadata for version {}",
+            version
+        ));
+    }
+
+    let data: Value = response.json()?;
+    let flags = data["version"]["java"]["flags"]["recommended"]
+        .as_array()
+        .ok_or_else(|| anyhow!("Failed to parse recommended flags from API"))?
+        .iter()
+        .filter_map(|v| v.as_str().map(String::from))
+        .collect();
+
+    Ok(flags)
+}
+
 pub fn setup_server(path: &PathBuf, config: &ServerConfig) -> Result<()> {
     println!("\n↓ Downloading Paper server...");
 

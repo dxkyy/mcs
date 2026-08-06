@@ -8,6 +8,8 @@ pub struct ServerConfig {
     pub version: String,
     pub server_type: ServerType,
     pub memory: String,
+    #[serde(default)]
+    pub recommended_flags: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -32,11 +34,17 @@ impl std::fmt::Display for ServerType {
 }
 
 impl ServerConfig {
-    pub fn new(version: String, server_type: ServerType, memory: String) -> Self {
+    pub fn new(
+        version: String,
+        server_type: ServerType,
+        memory: String,
+        recommended_flags: bool,
+    ) -> Self {
         Self {
             version,
             server_type,
             memory,
+            recommended_flags,
         }
     }
 

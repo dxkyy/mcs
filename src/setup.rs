@@ -1,24 +1,38 @@
 use anyhow::Result;
 use std::fs;
 use std::path::PathBuf;
-use crate::config::ServerConfig;
+use crate::config::{ServerConfig, ServerType};
+use crate::paper;
 
 pub fn create_start_scripts(path: &PathBuf, config: &ServerConfig) -> Result<()> {
+    let mut flags = String::new();
+    if config.recommended_flags && config.server_type == ServerType::Paper {
+        match paper::get_recommended_flags(&config.version) {
+            Ok(f) if !f.is_empty() => {
+                flags = format!("{} ", f.join(" "));
+                println!("✓ Using recommended JVM flags for Paper {}", config.version);
+            }
+            _ => println!("⚠ Couldn't fetch recommended JVM flags, using defaults"),
+        }
+    }
+
     let bat_content = format!(
         r#"@echo off
-java -Xms{memory} -Xmx{memory} -jar server.jar nogui
+java -Xms{memory} -Xmx{memory} {flags}-jar server.jar nogui
 pause
 "#,
-        memory = config.memory
+        memory = config.memory,
+        flags = flags
     );
 
     fs::write(path.join("start.bat"), bat_content)?;
 
     let sh_content = format!(
         r#"#!/bin/bash
-java -Xms{memory} -Xmx{memory} -jar server.jar nogui
+java -Xms{memory} -Xmx{memory} {flags}-jar server.jar nogui
 "#,
-        memory = config.memory
+        memory = config.memory,
+        flags = flags
     );
 
     fs::write(path.join("start.sh"), sh_content)?;
